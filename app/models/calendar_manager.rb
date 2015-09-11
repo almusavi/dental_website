@@ -19,32 +19,60 @@ class CalendarManager
     false
   end
 
-  # Check all available majors
+  def time_slots
+    self.workday.time_slots
+  end
 
-  # def print_time_slots_for_major_bookings
-  #   time_slots = self.workday.time_slots
-  #   major_times = time_slots.select{|t| t.allow_major?}
+  def major_time_slots
+    self.time_slots.select{|t| t.allow_major?}
+  end
 
-  #   available_times = Array.new
-  #   major_times.each_with_index do |t, index|
-  #     slot1 = t
-  #     break if t == major_times.last
-  #     # Major bookings must be 4 slots long or larger
-  #     slot2 = major_times[index + 1]
-  #     slot3 = major_times[index + 2]
-  #     slot4 = major_times[index + 3]
+  def minor_time_slots
+    self.time_slots.select{|t| !t.booked?}
+  end
 
+  # Print time_slots that will allow a major booking (4 consecutive slots)
+  # with 0 or 1 minor appointments
 
-  #     if AppointmentTools.adjacent?(slot1, slot2) and AppointmentTools.adjacent?(slot2, slot3) and AppointmentTools.adjacent?(slot3, slot4)
-  #       available_times << slot1
-  #     end
+  def print_time_slots_for_major_bookings
+    major_times = self.major_time_slots
 
-  #   end
+    available_times = Array.new
+    major_times.each_with_index do |t, index|
+      slot1 = t
+      break if t == major_times.last
+      # Major bookings must be 4 slots long or larger
+      slot2 = major_times[index + 1]
+      slot3 = major_times[index + 2]
+      slot4 = major_times[index + 3]
+      slot5 = major_times[index + 4]
 
-  #   # major_times.select{ |at| AppointmentTools.adjacent?(at, TimeSlot.find(at.id)) }
+      if CalendarManager.adjacent?(slot1, slot2) and CalendarManager.adjacent?(slot2, slot3) and CalendarManager.adjacent?(slot3, slot4) and CalendarManager.adjacent?(slot4, slot5)
+        available_times << slot1
+      end
+    end
+    return available_times
+  end
 
-  #   # time_slots.where( "start_time > :start_point AND end_time < :end_point", {start_point: start, end_point: ending} )
-  # end
+  def print_time_slots_for_minor_bookings
+    minor_times = self.minor_time_slots
+    available_times = Array.new
+
+    minor_times.each_with_index do |t, index|
+      slot1 = t
+      break if t == minor_times.last
+
+      # Minor bookings must be 2 slots long
+      slot2 = minor_times[index + 1]
+      slot3 = minor_times[index + 2]
+
+      if CalendarManager.adjacent?(slot1, slot2) and CalendarManager.adjacent?(slot2, slot3)
+        available_times << slot1
+      end
+    end
+    return available_times
+  end
+
 
   # def print_time_slots_for_minor_bookings
 
@@ -60,7 +88,7 @@ class CalendarManager
     first_slot = booking_first.time_slot
     second_slot = booking_last.time_slot
 
-    return false if AppointmentTools.adjacent?(first_slot, second_slot, @slot_length) || !booking_first.same_workday_as?(booking_last)
+    return false if CalendarManager.adjacent?(first_slot, second_slot, @slot_length) || !booking_first.same_workday_as?(booking_last)
     return false unless booking_first.same_appointment_as?(booking_last)
 
     start_point = first_slot.start_time
@@ -113,13 +141,16 @@ class CalendarManager
     hour = 9
     minute = 0
     @time_slots = Array.new
-
-    33.times do
-      beginning = TimeOfDay.parse(hour) + minute.minutes
-      ending = beginning + @slot_length.minutes
-      time_slot = TimeSlot.create work_day_id: self.workday.id, start_time: beginning.strftime("%I:%M %p"), end_time: ending.strftime("%I:%M %p"), date: day
-      @time_slots << time_slot
-      minute += @slot_length
+    if self.workday.any?
+      puts "Workday already has time_slots associated."
+    else
+      33.times do
+        beginning = TimeOfDay.parse(hour) + minute.minutes
+        ending = beginning + @slot_length.minutes
+        time_slot = TimeSlot.create work_day_id: self.workday.id, start_time: beginning.strftime("%I:%M %p"), end_time: ending.strftime("%I:%M %p"), date: day
+        @time_slots << time_slot
+        minute += @slot_length
+      end
     end
   end
 
