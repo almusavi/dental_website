@@ -2,7 +2,7 @@ source 'https://rubygems.org'
 
 
 # Bundle edge Rails instead: gem 'rails', github: 'rails/rails'
-ruby '2.0.0'
+ruby '2.2.1'
 gem 'rails', '4.1.5'
 # Use sqlite3 as the database for Active Record
 
@@ -85,7 +85,7 @@ gem 'time_difference'
 #Active Record Time Vaidatios
 # gem 'validates_timeliness'
 
-
+# STDOUT logging in Rails 4
 gem 'rails_12factor', group: :production
 
 # Hidden fields/Anti-spam form submissions
